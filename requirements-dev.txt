@@ -1,7 +1,0 @@
-pre-commit
-mkdocs
-mkdocs-material
-pymdown-extensions
-mkdocstrings-python
-mkdocstrings
-pytest

@@ -2,21 +2,14 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![PyPI version](https://badge.fury.io/py/iam-rolesanywhere-session.svg)](https://badge.fury.io/py/iam-rolesanywhere-session)
-![Status](https://img.shields.io/pypi/status/iam-rolesanywhere-session.svg)
-
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)
 
 This package provides an easy way to create a __refreshable__ boto3 Session with [AWS Roles Anywhere](https://docs.aws.amazon.com/rolesanywhere/latest/APIReference/Welcome.html).
 
 This package implements the algorithm described here: https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-sign-process.html.
 
+## Limitations
 
-## Requirements
-
-- Python 3.5 or later
-- Creation and configuration of a trust anchor. See [documentation](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/getting-started.html)
-- Valid X.509 certificate, private key, and optionally a certificate chain file associated with your trust anchor
+* Additional x509 Certificate Chain not yet supported
 
 ## Install
 
@@ -30,7 +23,7 @@ pip install iam-rolesanywhere-session
 
 ```bash
 git clone https://github.com/awslabs/iam-roles-anywhere-session.git
-python3 setup.py install
+python3 setup.py install 
 ```
 
 ## Configuration
@@ -54,6 +47,10 @@ IAMRoleAnywhereSession will take multiple arguments:
 
 ## Usage
 
+### Example
+
+- Minimum implementation
+
 ```python
 from iam_rolesanywhere_session import IAMRolesAnywhereSession
 
@@ -68,18 +65,43 @@ roles_anywhere_session = IAMRolesAnywhereSession(
 
 s3 = roles_anywhere_session.client("s3")
 print(s3.list_buckets())
-
+        
 ```
 
-# Documentation
+- Use a different region for IAM Roles Anywhere and the session.
 
-You can find [here](https://tbuatois.github.io/iam-rolesanywhere-session/) the complete documentation with additional usage and module reference.
+```python
+from iam_rolesanywhere_session import IAMRolesAnywhereSession
 
-## Contributing
+roles_anywhere_session = IAMRolesAnywhereSession(
+    profile_arn="arn:aws:rolesanywhere:eu-central-1:************:profile/a6294488-77cf-4d4a-8c5c-40b96690bbf0",
+    role_arn="arn:aws:iam::************:role/IAMRolesAnywhere-01",
+    trust_anchor_arn="arn:aws:rolesanywhere:eu-central-1::************::trust-anchor/4579702c-9abb-47c2-88b2-c734e0b29539,
+    certificate='certificate.pem',
+    private_key='privkey.pem',
+    region="eu-central-1"
+).get_session(region="eu-west-1")
 
-Contributions are very welcome.
-To learn more, see the [Contributor Guide](CONTRIBUTING.md).
+s3 = roles_anywhere_session.client("s3")
+print(s3.list_buckets())
+        
+```
 
-## License
+- Private Key encoded with a passphrase
 
-Distributed under the terms of the [Apache 2](LICENSE)
+```python
+from iam_rolesanywhere_session import IAMRolesAnywhereSession
+
+roles_anywhere_session = IAMRolesAnywhereSession(
+    profile_arn="arn:aws:rolesanywhere:eu-central-1:************:profile/a6294488-77cf-4d4a-8c5c-40b96690bbf0",
+    role_arn="arn:aws:iam::************:role/IAMRolesAnywhere-01",
+    trust_anchor_arn="arn:aws:rolesanywhere:eu-central-1::************::trust-anchor/4579702c-9abb-47c2-88b2-c734e0b29539,
+    certificate='certificate.pem',
+    private_key='privkey.pem',
+    private_key_passphrase = "my_secured_passphrase",
+    region="eu-central-1"
+).get_session(region="eu-west-1")
+
+s3 = roles_anywhere_session.client("s3")
+print(s3.list_buckets()) 
+```
