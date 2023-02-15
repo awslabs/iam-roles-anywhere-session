@@ -32,7 +32,7 @@ setup(
     description="Boto3 session creator for IAM Roles Anywhere",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">=3.5",
+    python_requires=">=3.8",
     install_requires=[
         "requests>=2.28.1",
         "pyOpenSSL>=22.0.0",
