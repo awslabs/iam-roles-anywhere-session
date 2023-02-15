@@ -6,7 +6,7 @@
   You may obtain a copy of the License at
 
       http://www.apache.org/licenses/LICENSE-2.0
-     
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,19 +22,17 @@ import logging
 from datetime import datetime
 from typing import List, Optional, TypedDict, Union
 
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from OpenSSL import crypto
-from OpenSSL.crypto import PKey
-
-
 from boto3.session import Session
 from botocore.auth import SIGV4_TIMESTAMP, SigV4Auth
 from botocore.awsrequest import AWSRequest, AWSResponse
 from botocore.credentials import DeferredRefreshableCredentials
 from botocore.httpsession import URLLib3Session
 from botocore.session import get_session as get_botocore_session
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from OpenSSL import crypto
+from OpenSSL.crypto import PKey
 
 log = logging.getLogger(__name__)
 
@@ -49,22 +47,20 @@ class IAMCredentials(TypedDict):
 
 
 class IAMRolesAnywhereSession:
-    
-    def __init__(self,
-                 profile_arn: str,
-                 role_arn: str,
-                 trust_anchor_arn: str,
-                 certificate: Union[str, bytes],
-                 private_key: Union[str, bytes],
-                 certificate_chain: Optional[Union[str, bytes]] = None,
-                 private_key_passphrase: Optional[str] = None,
-                 session_duration: Optional[int] = 3600,
-                 region: Optional[str] = "us-east-1",
-                 service_name: Optional[str] = "rolesanywhere",
-                 endpoint: Optional[str] = None
-                 ) -> None:
-
-
+    def __init__(
+        self,
+        profile_arn: str,
+        role_arn: str,
+        trust_anchor_arn: str,
+        certificate: Union[str, bytes],
+        private_key: Union[str, bytes],
+        certificate_chain: Optional[Union[str, bytes]] = None,
+        private_key_passphrase: Optional[str] = None,
+        session_duration: Optional[int] = 3600,
+        region: Optional[str] = "us-east-1",
+        service_name: Optional[str] = "rolesanywhere",
+        endpoint: Optional[str] = None,
+    ) -> None:
         # IAM Roles Anywhere variables
 
         self.profile_arn = profile_arn
@@ -73,27 +69,29 @@ class IAMRolesAnywhereSession:
         self.session_duration = session_duration
         self.region_name = region
         self.service_name = service_name
-        self.endpoint = endpoint or f'{self.service_name}.{self.region_name}.amazonaws.com'
+        self.endpoint = (
+            endpoint or f"{self.service_name}.{self.region_name}.amazonaws.com"
+        )
 
         # Certificates loading
         self.certificate = certificate
         self.certificate_chain = certificate_chain
-        
+
         # Private key loading
         self.private_key_passphrase = private_key_passphrase
         self.private_key = private_key
-        
+
         self._session = URLLib3Session()
-        
+
         self._request_signer = IAMRolesAnywhereSigner(
             certificate=self.certificate,
             private_key=self.private_key,
             certificate_chain=self.certificate_chain,
             private_key_passphrase=self.private_key_passphrase,
-            region= self.region_name,
-            service_name=self.service_name
+            region=self.region_name,
+            service_name=self.service_name,
         )
-           
+
     def get_session(self, **kwargs) -> Session:
         """Get a botocore session
 
@@ -113,15 +111,14 @@ class IAMRolesAnywhereSession:
         return Session(botocore_session=session)
 
     def get_refreshable_credentials(self) -> DeferredRefreshableCredentials:
-        """ Return refreshable credentials
+        """Return refreshable credentials
 
-            Returns:
-                DeferredRefreshableCredentials: set credentials needed to authentificate requests. Credentials will be auto refreshed when needed.
+        Returns:
+            DeferredRefreshableCredentials: set credentials needed to authentificate requests. Credentials will be auto refreshed when needed.
         """
 
         return DeferredRefreshableCredentials(
-            refresh_using=self.__get_credentials,
-            method='custom-roles-anywhere'
+            refresh_using=self.__get_credentials, method="custom-roles-anywhere"
         )
 
     def __get_credentials(self) -> IAMCredentials:
@@ -135,32 +132,37 @@ class IAMRolesAnywhereSession:
                 "expiry_time": expirationTime,
             }
         """
-        
+
         method = "POST"
-        
-        url = f'https://{self.endpoint}/sessions'
-    
+
+        url = f"https://{self.endpoint}/sessions"
+
         data = {
             "durationSeconds": self.session_duration,
             "profileArn": self.profile_arn,
             "roleArn": self.role_arn,
-            "trustAnchorArn": self.trust_anchor_arn
+            "trustAnchorArn": self.trust_anchor_arn,
         }
-        
-        # Generate a HTTP Request        
+
+        # Generate a HTTP Request
         credentials_request = AWSRequest(method=method, url=url, data=json.dumps(data))
-       
+
         # Add auth to request
         self._request_signer.add_auth(credentials_request)
-        
+
         # Make the request
-        credentials_request_resp: AWSResponse = self._session.send(credentials_request.prepare())
+        credentials_request_resp: AWSResponse = self._session.send(
+            credentials_request.prepare()
+        )
 
         log.debug(credentials_request_resp.text)
-        
+
         # Load the results
-        aws_creds = json.loads(credentials_request_resp.text).get(
-            'credentialSet')[0].get('credentials')
+        aws_creds = (
+            json.loads(credentials_request_resp.text)
+            .get("credentialSet")[0]
+            .get("credentials")
+        )
 
         return {
             "access_key": aws_creds.get("accessKeyId"),
@@ -168,73 +170,83 @@ class IAMRolesAnywhereSession:
             "token": aws_creds.get("sessionToken"),
             "expiry_time": aws_creds.get("expiration"),
         }
-    
+
+
 class IAMRolesAnywhereSigner(SigV4Auth):
-    
-    def __init__(self,
-                 certificate: Union[str, bytes],
-                 private_key: Union[str, bytes],
-                 certificate_chain: Optional[Union[str, bytes]] = None,
-                 private_key_passphrase: Optional[str] = None,
-                 region: Optional[str] = "us-east-1",
-                 service_name: Optional[str] = "rolesanywhere",
-                 ) -> None:
-        
+    def __init__(
+        self,
+        certificate: Union[str, bytes],
+        private_key: Union[str, bytes],
+        certificate_chain: Optional[Union[str, bytes]] = None,
+        private_key_passphrase: Optional[str] = None,
+        region: Optional[str] = "us-east-1",
+        service_name: Optional[str] = "rolesanywhere",
+    ) -> None:
         # Certificates loading
         self.certificate = self.__load_certificate(certificate)
-        self.certificate_chain = self.__load_certificate_chain(certificate_chain) if certificate_chain else None
-        
+        self.certificate_chain = (
+            self.__load_certificate_chain(certificate_chain)
+            if certificate_chain
+            else None
+        )
+
         # Private key loading
-        self.private_key_passphrase = private_key_passphrase.encode() if private_key_passphrase else None
+        self.private_key_passphrase = (
+            private_key_passphrase.encode() if private_key_passphrase else None
+        )
         self.private_key = self.__load_private_key(
-            private_key, self.private_key_passphrase)
+            private_key, self.private_key_passphrase
+        )
         self.private_key_type = self.__get_privatekey_type()
-        
-        super().__init__(credentials=None, service_name=service_name, region_name=region)
-            
+
+        super().__init__(
+            credentials=None, service_name=service_name, region_name=region
+        )
+
     def add_auth(self, request: AWSRequest) -> None:
-        
         datetime_now = datetime.utcnow()
-        request.context['timestamp'] = datetime_now.strftime(SIGV4_TIMESTAMP)
-       
+        request.context["timestamp"] = datetime_now.strftime(SIGV4_TIMESTAMP)
+
         self._modify_request_before_signing(request)
         canonical_request = self.canonical_request(request)
-        
+
         log.debug("Calculating signature using v4 auth.")
-        log.debug('CanonicalRequest:\n%s', canonical_request)
+        log.debug("CanonicalRequest:\n%s", canonical_request)
         string_to_sign = self.string_to_sign(request, canonical_request)
-               
-        log.debug('StringToSign:\n%s', string_to_sign)
-        
+
+        log.debug("StringToSign:\n%s", string_to_sign)
+
         signature = self.signature(string_to_sign)
-        log.debug('Signature:\n%s', signature)       
-        
+        log.debug("Signature:\n%s", signature)
+
         self._inject_signature_to_request(request, signature)
 
-    def _inject_signature_to_request(self, request: AWSRequest, signature: str) -> AWSRequest:
-        
-        x509_serial_number = '%d' % self.certificate.serial_number
-        
-        auth_str = [f'{self.algorithm} Credential={x509_serial_number}/%s' % self.scope(request)]
+    def _inject_signature_to_request(
+        self, request: AWSRequest, signature: str
+    ) -> AWSRequest:
+        x509_serial_number = "%d" % self.certificate.serial_number
+
+        auth_str = [
+            f"{self.algorithm} Credential={x509_serial_number}/%s" % self.scope(request)
+        ]
         headers_to_sign = self.headers_to_sign(request)
-        auth_str.append(
-            f"SignedHeaders={self.signed_headers(headers_to_sign)}"
-        )
-        auth_str.append('Signature=%s' % signature)
-        request.headers['Authorization'] = ', '.join(auth_str)
+        auth_str.append(f"SignedHeaders={self.signed_headers(headers_to_sign)}")
+        auth_str.append("Signature=%s" % signature)
+        request.headers["Authorization"] = ", ".join(auth_str)
         return request
-    
+
     def signature(self, string_to_sign) -> str:
         return crypto.sign(
-            self.private_key, (string_to_sign).encode('utf-8'), "sha256").hex()
-        
+            self.private_key, (string_to_sign).encode("utf-8"), "sha256"
+        ).hex()
+
     def scope(self, request: AWSRequest) -> str:
         scope = []
-        scope.append(request.context['timestamp'][0:8])
+        scope.append(request.context["timestamp"][0:8])
         scope.append(self._region_name)
         scope.append(self._service_name)
-        scope.append('aws4_request')
-        return '/'.join(scope)
+        scope.append("aws4_request")
+        return "/".join(scope)
 
     def string_to_sign(self, request: AWSRequest, canonical_request: str) -> str:
         """
@@ -243,24 +255,26 @@ class IAMRolesAnywhereSigner(SigV4Auth):
         were included in the StringToSign.
         """
         sts = [self.algorithm]
-        sts.append(request.context['timestamp']) #amz date
+        sts.append(request.context["timestamp"])  # amz date
         sts.append(self.credential_scope(request))
-        sts.append(hashlib.sha256(canonical_request.encode('utf-8')).hexdigest())
-        return '\n'.join(sts)
-    
+        sts.append(hashlib.sha256(canonical_request.encode("utf-8")).hexdigest())
+        return "\n".join(sts)
+
     def _modify_request_before_signing(self, request: AWSRequest) -> None:
-        
-        request.headers['Host'] = f'{self._service_name}.{self._region_name}.amazonaws.com'
-        request.headers['Content-Type'] = "application/x-amz-json-1.0"
+        request.headers[
+            "Host"
+        ] = f"{self._service_name}.{self._region_name}.amazonaws.com"
+        request.headers["Content-Type"] = "application/x-amz-json-1.0"
         self._set_necessary_date_headers(request)
         request.headers["X-Amz-X509"] = self.__encode_to_der(self.certificate)
-        
+
         if self.certificate_chain is not None:
-            request.headers["X-Amz-X509-Chain"] = self.__encode_to_der(self.certificate_chain)
-    
+            request.headers["X-Amz-X509-Chain"] = self.__encode_to_der(
+                self.certificate_chain
+            )
+
     @staticmethod
     def __encode_to_der(cert: Union[x509.Certificate, List[x509.Certificate]]) -> str:
-        
         """Encode certificate or chain to der
 
         Args:
@@ -269,22 +283,24 @@ class IAMRolesAnywhereSigner(SigV4Auth):
         Returns:
             str: return the certificate(s) encoded in der format
         """
-        
-        def encode_der(certificate): 
-            return base64.b64encode(
-                certificate.public_bytes(
-                    serialization.Encoding.DER
-                )
-            ).decode("utf-8").strip()
-        
+
+        def encode_der(certificate):
+            return (
+                base64.b64encode(certificate.public_bytes(serialization.Encoding.DER))
+                .decode("utf-8")
+                .strip()
+            )
+
         if isinstance(cert, x509.Certificate):
             return encode_der(cert)
-        
-        _certs = [ encode_der(crt) for crt in cert]    
+
+        _certs = [encode_der(crt) for crt in cert]
         return ",".join(_certs)
-        
+
     @staticmethod
-    def __load_certificate_chain(certificate_chain: Union[str, bytes]) -> List[x509.Certificate]:
+    def __load_certificate_chain(
+        certificate_chain: Union[str, bytes]
+    ) -> List[x509.Certificate]:
         """Load a certificate chain
 
         Args:
@@ -293,13 +309,12 @@ class IAMRolesAnywhereSigner(SigV4Auth):
         Returns:
             List[x509.Certificate]: return a list of certificate
         """
-        
+
         if isinstance(certificate_chain, bytes):
             return x509.load_pem_x509_certificates(certificate_chain)
 
         cert_chain_pem_file = open(certificate_chain, "rb")
-        _certs = x509.load_pem_x509_certificates(
-            cert_chain_pem_file.read())
+        _certs = x509.load_pem_x509_certificates(cert_chain_pem_file.read())
         cert_chain_pem_file.close()
 
         return _certs
@@ -317,14 +332,15 @@ class IAMRolesAnywhereSigner(SigV4Auth):
         if isinstance(certificate, bytes):
             return x509.load_pem_x509_certificate(certificate, default_backend())
         cert_pem_file = open(certificate, "rb")
-        _ = x509.load_pem_x509_certificate(
-            cert_pem_file.read(), default_backend())
+        _ = x509.load_pem_x509_certificate(cert_pem_file.read(), default_backend())
         cert_pem_file.close()
         return _
 
     @staticmethod
-    def __load_private_key(private_key: Union[str, bytes], passphrase: Optional[str] = None) -> PKey:
-        """Load the private key 
+    def __load_private_key(
+        private_key: Union[str, bytes], passphrase: Optional[str] = None
+    ) -> PKey:
+        """Load the private key
 
         Args:
             private_key (Union[str, bytes]): Representation of the private key in PEM format.
@@ -333,10 +349,13 @@ class IAMRolesAnywhereSigner(SigV4Auth):
             PKey: return a Pkey object
         """
         if isinstance(private_key, bytes):
-            return crypto.load_privatekey(crypto.FILETYPE_PEM, private_key, passphrase=passphrase)
-        key_pem_file = open(private_key, 'rb')
-        _ = crypto.load_privatekey(crypto.FILETYPE_PEM, key_pem_file.read(
-        ), passphrase=passphrase)
+            return crypto.load_privatekey(
+                crypto.FILETYPE_PEM, private_key, passphrase=passphrase
+            )
+        key_pem_file = open(private_key, "rb")
+        _ = crypto.load_privatekey(
+            crypto.FILETYPE_PEM, key_pem_file.read(), passphrase=passphrase
+        )
         key_pem_file.close()
         return _
 
@@ -362,4 +381,4 @@ class IAMRolesAnywhereSigner(SigV4Auth):
 
     @property
     def algorithm(self) -> str:
-        return f'AWS4-X509-{self.private_key_type}-{self.certificate.signature_hash_algorithm.name.upper()}'
+        return f"AWS4-X509-{self.private_key_type}-{self.certificate.signature_hash_algorithm.name.upper()}"
