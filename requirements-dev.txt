@@ -1,0 +1,7 @@
+mkdocs
+mkdocs-material
+mkdocstrings
+mkdocstrings-python
+pre-commit
+pymdown-extensions
+pytest
