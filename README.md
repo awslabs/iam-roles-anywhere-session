@@ -14,7 +14,7 @@ This package implements the algorithm described here: https://docs.aws.amazon.co
 
 ## Requirements
 
-- Python 3.5 or later
+- Python 3.8 or later
 - Creation and configuration of a trust anchor. See [documentation](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/getting-started.html)
 - Valid X.509 certificate, private key, and optionally a certificate chain file associated with your trust anchor
 

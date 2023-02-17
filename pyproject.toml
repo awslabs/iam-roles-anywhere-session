@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "setuptools-scm"]
+requires = ["setuptools>=62", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -31,6 +31,9 @@ dependencies = [
     "cryptography>=37.0.4",
     'importlib-metadata; python_version<"3.8"',
 ]
+
+dynamic = [ "readme"]
+
 [project.optional-dependencies]
 dev = [
     "mkdocs",
@@ -41,8 +44,6 @@ dev = [
     "pymdown-extensions",
     "pytest",
 ]
-
-dynamic = [ "readme"]
 
 [tool.setuptools]
 
