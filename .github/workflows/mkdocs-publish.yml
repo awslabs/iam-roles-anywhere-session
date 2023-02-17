@@ -34,13 +34,8 @@ jobs:
           python-version: '3.9'
 
       - name: Install package
-        run: pip install ./
+        run: python3 -m pip install .[dev]
 
-      - name: Install MkDocs and Material for MkDocs
-        run: pip install -r requirements-dev.txt
-
-      - name: Install Pillow and CairoSVG (required for social card generation)
-        run: pip install pillow cairosvg
       - name: Setup caching
         uses: actions/cache@v3
         with:

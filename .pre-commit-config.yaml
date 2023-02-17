@@ -4,12 +4,6 @@ repos:
     hooks:
       - id: black
 
-  - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: v2.2.0
-    hooks:
-      - id: setup-cfg-fmt
-
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -23,4 +17,3 @@ repos:
       - id: end-of-file-fixer # ensures that a file is either empty, or ends with one newline.
       - id: fix-byte-order-marker # removes utf-8 byte order marker.
       - id: mixed-line-ending # replaces or checks mixed line ending.
-      - id: requirements-txt-fixer # sorts entries in requirements.txt.

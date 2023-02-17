@@ -29,7 +29,8 @@ pip install iam-rolesanywhere-session
 
 ```bash
 git clone https://github.com/awslabs/iam-roles-anywhere-session.git
-python3 setup.py install
+cd iam-roles-anywhere-session
+python3 -m pip install ./
 ```
 
 ## Configuration

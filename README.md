@@ -30,7 +30,8 @@ pip install iam-rolesanywhere-session
 
 ```bash
 git clone https://github.com/awslabs/iam-roles-anywhere-session.git
-python3 setup.py install
+cd iam-roles-anywhere-session
+python3 -m pip install ./
 ```
 
 ## Configuration
@@ -56,7 +57,6 @@ IAMRoleAnywhereSession will take multiple arguments:
 
 ```python
 from iam_rolesanywhere_session import IAMRolesAnywhereSession
-
 roles_anywhere_session = IAMRolesAnywhereSession(
     profile_arn="arn:aws:rolesanywhere:eu-central-1:************:profile/a6294488-77cf-4d4a-8c5c-40b96690bbf0",
     role_arn="arn:aws:iam::************:role/IAMRolesAnywhere-01",
@@ -65,10 +65,8 @@ roles_anywhere_session = IAMRolesAnywhereSession(
     private_key='privkey.pem',
     region="eu-central-1"
 ).get_session()
-
 s3 = roles_anywhere_session.client("s3")
 print(s3.list_buckets())
-
 ```
 
 # Documentation
