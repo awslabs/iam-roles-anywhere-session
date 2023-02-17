@@ -1,6 +1,23 @@
 ---
 title: Usage
 ---
+# Configuration Parameters
+
+IAMRoleAnywhereSession will take multiple arguments:
+
+| Name             | Description                                                                                                                              | Type          | Default value |
+|------------------|------------------------------------------------------------------------------------------------------------------------------------------|---------------|---------------|
+| profile_arn      | The Amazon Resource Name (ARN) of the profile.                                                                                           | string        |     None      |
+| role_arn         | The Amazon Resource Name (ARN) of the role to assume.                                                                                    | string        |     None      |
+| trust_anchor_arn | The Amazon Resource Name (ARN) of the trust anchor.                                                                                      | string        |     None      |
+| certificate      | The x509 certificate file, in PEM format.                                                                                                | path or bytes |     None      |
+| private_key      | The certificate private key file, in PEM Format.                                                                                         | path or bytes |     None      |
+| passphrase       | The passphrase use to decrypt private key file.                                                                                          | string        |     None      |
+| region           | The name of the region where you configured IAM Roles Anywhere.                                                                          | string        |   us-east-1   |
+| session_duration | The duration, in seconds, of the role session. The value specified can  range from 900 seconds (15 minutes) up to 3600 seconds (1 hour). | int           |     3600      |
+| service_name     | An identifier for the service, used to build the botosession.                                                                            | string        | rolesanywhere |
+| endpoint         | Roles Anywhere API endpoint to use                                                                                                       | string        | {service_name}.{region_name}.amazonaws.com' |
+
 
 # Examples
 
