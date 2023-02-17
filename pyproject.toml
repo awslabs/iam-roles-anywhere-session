@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iam_rolesanywhere_session"
+
+version = "1.0.0"
+
+authors = [
+    {name = "Thomas Buatois", email = "tbuatois@amazon.fr"},
+]
+
+description = "Boto3 session creator for IAM Roles Anywhere"
+
+keywords = ["iam", "aws", "rolesanywhere", "boto3", "botocore"]
+license = {text = "Apache-2.0"}
+
+requires-python = ">=3.8"
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+]
+
+dependencies = [
+    "pyOpenSSL>=22.0.0",
+    "boto3>=1.24.55",
+    "botocore>=1.27.55",
+    "cryptography>=37.0.4",
+    'importlib-metadata; python_version<"3.8"',
+]
+[project.optional-dependencies]
+dev = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings",
+    "mkdocstrings-python",
+    "pre-commit",
+    "pymdown-extensions",
+    "pytest",
+]
+
+dynamic = [ "readme"]
+
+[tool.setuptools]
+
+license-files = ["LICENSE"]
+
+
+[project.urls]
+documentation = "https://awslabs.github.io/iam-rolesanywhere-session/"
+repository = "https://github.com/awslabs/iam-roles-anywhere-session.git"
+changelog = "https://github.com/awslabs/iam-roles-anywhere-session./blob/main/CHANGELOG.md"
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type = "text/markdown"}
