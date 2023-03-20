@@ -52,6 +52,7 @@ IAMRoleAnywhereSession will take multiple arguments:
 | session_duration | The duration, in seconds, of the role session. The value specified can  range from 900 seconds (15 minutes) up to 3600 seconds (1 hour). | int           |     3600      |
 | service_name     | An identifier for the service, used to build the botosession.                                                                            | string        | rolesanywhere |
 | endpoint         | Roles Anywhere API endpoint to use                                                                                                       | string        | {service_name}.{region_name}.amazonaws.com' |
+| proxy         | Proxy endpoint(s) for use behind private networks with a proxy, defaults to `{}`                                                                                                       | dict        | {'https': "http://URL:PORT", 'http': "http://URL:PORT"} |
 
 ## Usage
 
