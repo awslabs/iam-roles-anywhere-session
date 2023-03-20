@@ -60,6 +60,7 @@ class IAMRolesAnywhereSession:
         region: Optional[str] = "us-east-1",
         service_name: Optional[str] = "rolesanywhere",
         endpoint: Optional[str] = None,
+        proxy: Optional[dict] = {},
     ) -> None:
         # IAM Roles Anywhere variables
 
@@ -81,7 +82,8 @@ class IAMRolesAnywhereSession:
         self.private_key_passphrase = private_key_passphrase
         self.private_key = private_key
 
-        self._session = URLLib3Session()
+        self.proxy = proxy
+        self._session = URLLib3Session(proxies=self.proxy)
 
         self._request_signer = IAMRolesAnywhereSigner(
             certificate=self.certificate,
