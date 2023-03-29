@@ -208,8 +208,13 @@ class IAMRolesAnywhereSession:
         log.debug(credentials_request_resp.text)
 
         # Load the results
+        credentials_request_response_text = json.loads(credentials_request_resp.text)
+        if credentials_request_resp.status_code > 299:
+            log.error(credentials_request_response_text["message"])
+            raise Exception(credentials_request_response_text["message"])
+            
         aws_creds = (
-            json.loads(credentials_request_resp.text)
+            credentials_request_response_text
             .get("credentialSet")[0]
             .get("credentials")
         )
