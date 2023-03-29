@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## 2.1.0
+
+Improvements:
+
+ - [#5](https://github.com/awslabs/iam-roles-anywhere-session/pull/5) Add proxy explicit proxy support
+ - [#6](https://github.com/awslabs/iam-roles-anywhere-session/pull/6) Throw an error when credentials cannot be created
+
+
 ## 2.0.0
 
 Packaging:
