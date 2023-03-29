@@ -46,6 +46,45 @@ class IAMCredentials(TypedDict):
     expiry_time: str
 
 
+class ProxyConfig(TypedDict):
+    """A dictionary of proxy servers to use by protocol or
+        endpoint
+
+    Args:
+        http_proxy (str): http proxy server with port
+        https_proxy (str): https proxy server with port
+
+    Examples:
+        `{'https': "http://URL:PORT", 'http': "http://URL:PORT"}`
+    """
+
+    http_proxy: str
+    https_proxy: str
+
+
+class AdditionalProxyConfig(TypedDict):
+    """A dictionary of additional proxy configurations.
+
+    Args:
+        * proxy_ca_bundle (str): -- The path to a custom certificate bundle to use
+            when establishing SSL/TLS connections with proxy.
+        * proxy_client_cert (str,tuple): -- The path to a certificate for proxy
+          TLS client authentication.
+          When a str is provided it is treated as a path to a proxy client
+          certificate. When a two element tuple is provided, it will be
+          interpreted as the path to the client certificate, and the path
+          to the certificate key.
+        * proxy_use_forwarding_for_http (bool): -- For HTTPS proxies,
+          forward your requests to HTTPS destinations with an absolute
+          URI. We strongly recommend you only use this option with
+          trusted or corporate proxies. Value must be boolean.
+    """
+
+    proxy_ca_bundle: str
+    proxy_client_cert: Union[str, tuple]
+    proxy_use_forwarding_for_https: bool
+
+
 class IAMRolesAnywhereSession:
     def __init__(
         self,
@@ -60,6 +99,8 @@ class IAMRolesAnywhereSession:
         region: Optional[str] = "us-east-1",
         service_name: Optional[str] = "rolesanywhere",
         endpoint: Optional[str] = None,
+        proxies: Optional[ProxyConfig] = {},
+        proxies_config: Optional[AdditionalProxyConfig] = {},
     ) -> None:
         # IAM Roles Anywhere variables
 
@@ -81,7 +122,11 @@ class IAMRolesAnywhereSession:
         self.private_key_passphrase = private_key_passphrase
         self.private_key = private_key
 
-        self._session = URLLib3Session()
+        self.proxies = proxies
+        self.proxies_config = proxies_config
+        self._session = URLLib3Session(
+            proxies=self.proxies, proxies_config=self.proxies_config
+        )
 
         self._request_signer = IAMRolesAnywhereSigner(
             certificate=self.certificate,
@@ -106,6 +151,11 @@ class IAMRolesAnywhereSession:
 
         # Default session region
         session.set_config_variable("region", self.region_name)
+
+        # Set proxy configuration
+        session.set_config_variable("proxies", self.proxies)
+        session.set_config_variable("proxies_config", self.proxies_config)
+
         for k, v in kwargs.items():
             session.set_config_variable(k, v)
         return Session(botocore_session=session)
