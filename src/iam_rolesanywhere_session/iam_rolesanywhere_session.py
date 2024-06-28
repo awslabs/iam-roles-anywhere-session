@@ -99,6 +99,7 @@ class IAMRolesAnywhereSession:
         region: Optional[str] = "us-east-1",
         service_name: Optional[str] = "rolesanywhere",
         endpoint: Optional[str] = None,
+        verify: Optional[Union[str, bool]] = None,
         proxies: Optional[ProxyConfig] = {},
         proxies_config: Optional[AdditionalProxyConfig] = {},
     ) -> None:
@@ -125,7 +126,7 @@ class IAMRolesAnywhereSession:
         self.proxies = proxies
         self.proxies_config = proxies_config
         self._session = URLLib3Session(
-            proxies=self.proxies, proxies_config=self.proxies_config
+            proxies=self.proxies, proxies_config=self.proxies_config, verify=verify
         )
 
         self._request_signer = IAMRolesAnywhereSigner(
