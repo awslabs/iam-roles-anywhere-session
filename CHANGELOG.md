@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## 2.2.0
+
+Improvements:
+
+ - [#8](https://github.com/awslabs/iam-roles-anywhere-session/pull/8) Fix readme
+ - [#10](https://github.com/awslabs/iam-roles-anywhere-session/pull/10) Add support for 'verify' parameter to specify path to trusted CA or allow insecure connections.
+
+
 ## 2.1.0
 
 Improvements:
