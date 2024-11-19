@@ -7,7 +7,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)
 
-This package provides an easy way to create a __refreshable__ boto3 Session with [AWS Roles Anywhere](https://docs.aws.amazon.com/rolesanywhere/latest/APIReference/Welcome.html).
+This package provides an easy way to create a __refreshable__ boto3 Session with [IAM Roles Anywhere](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/introduction.html), without defining an [AWS profile](https://docs.aws.amazon.com/rolesanywhere/latest/userguide/credential-helper.html#credential-helper-examples) with relevant configuration for IAM roles anywhere.
 
 This package implements the algorithm described here: <https://docs.aws.amazon.com/rolesanywhere/latest/userguide/authentication-sign-process.html>.
 
