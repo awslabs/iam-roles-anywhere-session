@@ -31,8 +31,10 @@ from botocore.session import get_session as get_botocore_session
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from OpenSSL import crypto
-from OpenSSL.crypto import PKey
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey, ECDSA
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+from cryptography.hazmat.primitives.hashes import SHA256
 
 log = logging.getLogger(__name__)
 
@@ -291,10 +293,15 @@ class IAMRolesAnywhereSigner(SigV4Auth):
         request.headers["Authorization"] = ", ".join(auth_str)
         return request
 
-    def signature(self, string_to_sign) -> str:
-        return crypto.sign(
-            self.private_key, (string_to_sign).encode("utf-8"), "sha256"
-        ).hex()
+    def signature(self, string_to_sign: str, _=None) -> str:
+        if isinstance(self.private_key, RSAPrivateKey):
+            return self.private_key.sign(
+                data=(string_to_sign).encode("utf-8"),
+                padding=PKCS1v15(),
+                algorithm=SHA256()
+            ).hex()
+        else:
+            return self.private_key.sign((string_to_sign).encode("utf-8"), ECDSA(SHA256())).hex()
 
     def scope(self, request: AWSRequest) -> str:
         scope = []
@@ -340,7 +347,7 @@ class IAMRolesAnywhereSigner(SigV4Auth):
             str: return the certificate(s) encoded in der format
         """
 
-        def encode_der(certificate):
+        def encode_der(certificate: x509.Certificate) -> str:
             return (
                 base64.b64encode(certificate.public_bytes(serialization.Encoding.DER))
                 .decode("utf-8")
@@ -392,8 +399,8 @@ class IAMRolesAnywhereSigner(SigV4Auth):
 
     @staticmethod
     def __load_private_key(
-        private_key: Union[str, bytes], passphrase: Optional[str] = None
-    ) -> PKey:
+        private_key: Union[str, bytes], passphrase: Optional[bytes] = None
+    ) -> RSAPrivateKey | EllipticCurvePrivateKey:
         """Load the private key
 
         Args:
@@ -403,13 +410,13 @@ class IAMRolesAnywhereSigner(SigV4Auth):
             PKey: return a Pkey object
         """
         if isinstance(private_key, bytes):
-            return crypto.load_privatekey(
-                crypto.FILETYPE_PEM, private_key, passphrase=passphrase
-            )
-        with open(private_key, "rb") as private_key:
-            return crypto.load_privatekey(
-                crypto.FILETYPE_PEM, private_key.read(), passphrase=passphrase
-            )
+            loaded_pk = serialization.load_pem_private_key(private_key, password=passphrase)
+        else:
+            with open(private_key, "rb") as pk_file:
+                loaded_pk = serialization.load_pem_private_key(pk_file.read(), password=passphrase)
+        if not isinstance(loaded_pk, RSAPrivateKey) or isinstance(loaded_pk, EllipticCurvePrivateKey):
+            raise TypeError("Unsupported private key type: Must be RSA or ECDSA.")
+        return loaded_pk
 
     def __get_privatekey_type(self) -> str:
         """Get the private key type and raise an error for unsupported type
@@ -421,15 +428,11 @@ class IAMRolesAnywhereSigner(SigV4Auth):
         Returns:
             str: Type of the key, RSA or ECDSA.
         """
-        if isinstance(self.private_key, PKey):
-            if self.private_key.type() == crypto.TYPE_EC:
-                return "ECDSA"
-            elif self.private_key.type() == crypto.TYPE_RSA:
-                return "RSA"
-            else:
-                raise Exception("Private Key type is not supported")
-        else:
-            raise Exception("Object is not a Pkey instance")
+        if isinstance(self.private_key, EllipticCurvePrivateKey):
+            return "ECDSA"
+        if isinstance(self.private_key, RSAPrivateKey):
+            return "RSA"
+        raise Exception("Private Key type is not supported")
 
     @property
     def algorithm(self) -> str:
