@@ -20,7 +20,7 @@ import hashlib
 import json
 import logging
 from datetime import datetime
-from typing import List, Optional, TypedDict, Union
+from typing import List, Literal, Optional, TypedDict, Union
 
 from boto3.session import Session
 from botocore.auth import SIGV4_TIMESTAMP, SigV4Auth
@@ -255,7 +255,6 @@ class IAMRolesAnywhereSigner(SigV4Auth):
         self.private_key = self.__load_private_key(
             private_key, self.private_key_passphrase
         )
-        self.private_key_type = self.__get_privatekey_type()
 
         super().__init__(
             credentials=None, service_name=service_name, region_name=region
@@ -406,6 +405,10 @@ class IAMRolesAnywhereSigner(SigV4Auth):
         Args:
             private_key (Union[str, bytes]): Representation of the private key in PEM format.
 
+        Raises:
+            Exception: Private key is not supported
+            Exception: The object provided is not a PKey object
+
         Returns:
             PKey: return a Pkey object
         """
@@ -414,25 +417,13 @@ class IAMRolesAnywhereSigner(SigV4Auth):
         else:
             with open(private_key, "rb") as pk_file:
                 loaded_pk = serialization.load_pem_private_key(pk_file.read(), password=passphrase)
-        if not isinstance(loaded_pk, RSAPrivateKey) or isinstance(loaded_pk, EllipticCurvePrivateKey):
+        if not (isinstance(loaded_pk, RSAPrivateKey) or isinstance(loaded_pk, EllipticCurvePrivateKey)):
             raise TypeError("Unsupported private key type: Must be RSA or ECDSA.")
         return loaded_pk
 
-    def __get_privatekey_type(self) -> str:
-        """Get the private key type and raise an error for unsupported type
-
-        Raises:
-            Exception: Private key is not supported
-            Exception: The object provided is not a PKey object
-
-        Returns:
-            str: Type of the key, RSA or ECDSA.
-        """
-        if isinstance(self.private_key, EllipticCurvePrivateKey):
-            return "ECDSA"
-        if isinstance(self.private_key, RSAPrivateKey):
-            return "RSA"
-        raise Exception("Private Key type is not supported")
+    @property
+    def private_key_type(self) -> Literal["RSA", "ECDSA"]:
+        return "ECDSA" if isinstance(self.private_key, EllipticCurvePrivateKey) else "RSA"
 
     @property
     def algorithm(self) -> str:
