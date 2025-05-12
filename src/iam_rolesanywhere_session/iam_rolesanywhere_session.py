@@ -399,7 +399,7 @@ class IAMRolesAnywhereSigner(SigV4Auth):
     @staticmethod
     def __load_private_key(
         private_key: Union[str, bytes], passphrase: Optional[bytes] = None
-    ) -> RSAPrivateKey | EllipticCurvePrivateKey:
+    ) -> Union[RSAPrivateKey, EllipticCurvePrivateKey]:
         """Load the private key
 
         Args:
