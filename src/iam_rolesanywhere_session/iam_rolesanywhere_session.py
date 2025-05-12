@@ -101,7 +101,7 @@ class IAMRolesAnywhereSession:
         region: Optional[str] = "us-east-1",
         service_name: Optional[str] = "rolesanywhere",
         endpoint: Optional[str] = None,
-        verify: Optional[Union[str, bool]] = None,
+        verify: Optional[Union[str, bool]] = True,
         proxies: Optional[ProxyConfig] = {},
         proxies_config: Optional[AdditionalProxyConfig] = {},
     ) -> None:
