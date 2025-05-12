@@ -25,7 +25,6 @@ classifiers = [
 ]
 
 dependencies = [
-    "pyOpenSSL>=22.0.0",
     "boto3>=1.24.55",
     "botocore>=1.27.55",
     "cryptography>=37.0.4",
