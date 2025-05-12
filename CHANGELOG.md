@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+
+## 2.3.0
+
+Improvements:
+
+ - [#16](https://github.com/awslabs/iam-roles-anywhere-session/pull/16) replace depreciated OpenSSL.crypto.sign by cryptography.hazmat.primitives.asymmetric by @mathieudupoux
+ - [#13](https://github.com/awslabs/iam-roles-anywhere-session/issues/13) fix
+  
+
 ## 2.2.0
 
 Improvements:
