@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "iam_rolesanywhere_session"
 
-version = "2.2.0"
+version = "2.3.0"
 
 authors = [
     {name = "Thomas Buatois", email = "tbuatois@amazon.fr"},
