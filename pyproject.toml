@@ -36,7 +36,7 @@ dynamic = [ "readme"]
 [project.optional-dependencies]
 dev = [
     "mkdocs",
-    "mkdocs-material",
+    "mkdocs-material>=9.5.32",
     "mkdocstrings",
     "mkdocstrings-python",
     "pre-commit",
