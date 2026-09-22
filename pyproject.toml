@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=67", "setuptools-scm"]
+requires = ["setuptools>=77", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -14,21 +14,30 @@ authors = [
 description = "Boto3 session creator for IAM Roles Anywhere"
 
 keywords = ["iam", "aws", "rolesanywhere", "boto3", "botocore"]
-license = {text = "Apache-2.0"}
 
-requires-python = ">=3.8"
+# PEP 639: SPDX expression plus project-level license-files. Both require
+# setuptools>=77, and replace the deprecated license table, the
+# "License :: OSI Approved" classifier and tool.setuptools.license-files.
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+
+requires-python = ">=3.9"
 
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: Apache Software License",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
 ]
 
 dependencies = [
     "boto3>=1.24.55",
     "botocore>=1.27.55",
     "cryptography>=37.0.4",
-    'importlib-metadata; python_version<"3.8"',
 ]
 
 dynamic = [ "readme"]
@@ -44,15 +53,14 @@ dev = [
     "pytest",
 ]
 
-[tool.setuptools]
-
-license-files = ["LICENSE"]
-
-
 [project.urls]
 documentation = "https://awslabs.github.io/iam-rolesanywhere-session/"
 repository = "https://github.com/awslabs/iam-roles-anywhere-session.git"
-changelog = "https://github.com/awslabs/iam-roles-anywhere-session./blob/main/CHANGELOG.md"
+changelog = "https://github.com/awslabs/iam-roles-anywhere-session/blob/main/CHANGELOG.md"
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"], content-type = "text/markdown"}
+
+[tool.setuptools.package-data]
+# PEP 561 marker, so type checkers honour the inline annotations.
+iam_rolesanywhere_session = ["py.typed"]
