@@ -42,11 +42,21 @@ from cryptography.hazmat.primitives.hashes import SHA256
 
 from .exceptions import (
     CredentialsRetrievalError,
+    InvalidSessionDurationError,
     UnsupportedFipsEndpointError,
     UnsupportedPrivateKeyError,
 )
 
 log = logging.getLogger(__name__)
+
+#: Shortest session duration accepted by `CreateSession`.
+MIN_SESSION_DURATION = 900
+
+#: Longest session duration accepted by `CreateSession`. The effective ceiling
+#: for a request is the lower of the profile's ``durationSeconds`` and the
+#: role's ``MaxSessionDuration``, so a value accepted here may still be
+#: rejected by the service.
+MAX_SESSION_DURATION = 43200
 
 
 class IAMCredentials(TypedDict):
@@ -98,6 +108,11 @@ class AdditionalProxyConfig(TypedDict, total=False):
     proxy_ca_bundle: str
     proxy_client_cert: Union[str, tuple]
     proxy_use_forwarding_for_https: bool
+
+
+#: Arbitrary key/value pairs describing the calling workload, sent as
+#: ``instanceProperties``. Requires ``requireInstanceProperties`` on the profile.
+InstanceProperties = Dict[str, str]
 
 
 def _set_header(request: AWSRequest, name: str, value: str) -> None:
@@ -192,6 +207,27 @@ def _resolve_endpoint(
     return urlsplit(client.meta.endpoint_url).netloc
 
 
+def _validate_session_duration(session_duration: int) -> int:
+    """Check a requested duration against the range accepted by the service.
+
+    Args:
+        session_duration (int): Requested duration, in seconds.
+
+    Raises:
+        InvalidSessionDurationError: Duration is outside 900-43200 seconds.
+
+    Returns:
+        int: The validated duration.
+    """
+
+    if not MIN_SESSION_DURATION <= session_duration <= MAX_SESSION_DURATION:
+        raise InvalidSessionDurationError(
+            f"session_duration must be between {MIN_SESSION_DURATION} and "
+            f"{MAX_SESSION_DURATION} seconds, got {session_duration}"
+        )
+    return session_duration
+
+
 def _error_message(response: AWSResponse) -> str:
     """Extract a human readable error from a failed response, if possible.
 
@@ -265,6 +301,8 @@ class IAMRolesAnywhereSession:
         verify: Optional[Union[str, bool]] = True,
         proxies: Optional[ProxyConfig] = None,
         proxies_config: Optional[AdditionalProxyConfig] = None,
+        role_session_name: Optional[str] = None,
+        instance_properties: Optional[InstanceProperties] = None,
         use_fips_endpoint: bool = False,
     ) -> None:
         # IAM Roles Anywhere variables
@@ -272,12 +310,16 @@ class IAMRolesAnywhereSession:
         self.profile_arn = profile_arn
         self.role_arn = role_arn
         self.trust_anchor_arn = trust_anchor_arn
-        self.session_duration = session_duration
+        self.session_duration = _validate_session_duration(session_duration)
         self.region_name = region
         self.service_name = service_name
         self.endpoint = endpoint or _resolve_endpoint(
             service_name, region, use_fips_endpoint
         )
+
+        # Optional session attributes
+        self.role_session_name = role_session_name
+        self.instance_properties = instance_properties
 
         # Certificates loading
         self.certificate = certificate
@@ -359,6 +401,31 @@ class IAMRolesAnywhereSession:
             refresh_using=self.__get_credentials, method="custom-roles-anywhere"
         )
 
+    def _build_session_request_body(self) -> Dict[str, Union[str, int, Dict[str, str]]]:
+        """Build the `CreateSession` request body.
+
+        Optional members are omitted rather than sent as ``null``, because the
+        service rejects ``roleSessionName`` unless the profile was created with
+        ``acceptRoleSessionName``.
+
+        Returns:
+            dict: Request body to serialise as JSON.
+        """
+
+        body: Dict[str, Union[str, int, Dict[str, str]]] = {
+            "durationSeconds": self.session_duration,
+            "profileArn": self.profile_arn,
+            "roleArn": self.role_arn,
+            "trustAnchorArn": self.trust_anchor_arn,
+        }
+
+        if self.role_session_name is not None:
+            body["roleSessionName"] = self.role_session_name
+        if self.instance_properties is not None:
+            body["instanceProperties"] = self.instance_properties
+
+        return body
+
     def __get_credentials(self) -> IAMCredentials:
         """Compute and make the request to rolesanywhere endpoint to retrieve IAM Credentials
 
@@ -378,14 +445,9 @@ class IAMRolesAnywhereSession:
         url = f"https://{self.endpoint}/sessions"
 
         # Generate a HTTP Request
-        data = {
-            "durationSeconds": self.session_duration,
-            "profileArn": self.profile_arn,
-            "roleArn": self.role_arn,
-            "trustAnchorArn": self.trust_anchor_arn,
-        }
-
-        credentials_request = AWSRequest(method="POST", url=url, data=json.dumps(data))
+        credentials_request = AWSRequest(
+            method="POST", url=url, data=json.dumps(self._build_session_request_body())
+        )
 
         # Add auth to request
         self._request_signer.add_auth(credentials_request)
