@@ -131,3 +131,13 @@ dmypy.json
 # IDE
 .vscode/
 .devcontainer/
+.DS_Store
+
+# Live integration test material (integration/) - never commit key material.
+# Recursive, so per-region subdirectories are covered too.
+integration/**/*.pem
+integration/**/*.key
+integration/**/.terraform/
+integration/**/.terraform.lock.hcl
+integration/**/terraform.tfstate*
+integration/**/*.tfvars
