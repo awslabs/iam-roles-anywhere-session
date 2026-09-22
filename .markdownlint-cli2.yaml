@@ -1,0 +1,26 @@
+# markdownlint configuration.
+#
+# Read by markdownlint-cli2 (CI) and by the VS Code markdownlint extension, so
+# the editor and CI report exactly the same problems. Rules not listed below are
+# left at their defaults.
+
+config:
+  # Line length. The configuration tables in README.md and docs/index.md have
+  # long parameter descriptions, and a table cell cannot be wrapped without
+  # breaking the table. Prose is soft-wrapped by hand instead.
+  MD013: false
+
+  # First line in a file should be a top-level heading. Two files legitimately
+  # have no H1: .github/PULL_REQUEST_TEMPLATE.md opens with the prompt text that
+  # becomes a pull request description, and CODE_OF_CONDUCT.md is upstream
+  # boilerplate that starts at H2.
+  MD041: false
+
+globs:
+  - "**/*.md"
+
+ignores:
+  - ".venv/**"
+  - "site/**"
+  - "build/**"
+  - "dist/**"
