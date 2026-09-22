@@ -1,21 +1,25 @@
-permissions:
-  id-token: write
-  contents: read
-
 name: Upload Python Package
 
 on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: prod
+    permissions:
+      # Required for PyPI Trusted Publishing. No API token is stored in the
+      # repository: PyPI verifies this workflow's OIDC identity instead.
+      id-token: write
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
       - name: Install dependencies
@@ -26,6 +30,3 @@ jobs:
         run: python -m build
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}

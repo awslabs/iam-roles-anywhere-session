@@ -9,19 +9,41 @@ on:
   pull_request:
     branches: [ "*" ]
 
+permissions:
+  contents: read
+
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-python@v7
+      with:
+        python-version: '3.12'
+    - uses: actions/cache@v6
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+    # Runs the same hooks contributors get locally, so formatting can no longer
+    # drift from .pre-commit-config.yaml on the default branch. Invoked directly
+    # rather than via pre-commit/action, which is in maintenance-only mode.
+    - name: Run pre-commit
+      run: |
+        python -m pip install --upgrade pip pre-commit
+        pre-commit run --all-files --show-diff-on-failure
+
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -36,9 +58,9 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
-      run: pytest . --doctest-modules --junitxml=junit/test-results-${{ matrix.python-version }}.xml
+      run: pytest --junitxml=junit/test-results-${{ matrix.python-version }}.xml
     - name: Upload pytest test results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: pytest-results-${{ matrix.os }}-${{ matrix.python-version }}
         path: junit/test-results-${{ matrix.python-version }}.xml
