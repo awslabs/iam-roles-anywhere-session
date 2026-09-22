@@ -16,9 +16,10 @@ config:
   # boilerplate that starts at H2.
   MD041: false
 
-globs:
-  - "**/*.md"
-
+# No "globs" here on purpose. The pre-commit hook passes the staged files, and a
+# glob would additionally pull in every other markdown file, so a partial commit
+# would be judged on files it does not touch. For a whole-repository run pass the
+# glob explicitly: markdownlint-cli2 "**/*.md"
 ignores:
   - ".venv/**"
   - "site/**"
